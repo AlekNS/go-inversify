@@ -4,33 +4,37 @@ import (
 	"reflect"
 )
 
-// IContainer .
-type IContainer interface {
+// Container .
+type Container interface {
 	// Bind .
 	Bind(Any) *Binding
-	// BindByType .
-	BindByType(reflect.Type) *Binding
+	// Unbind .
+	Unbind(Any) Container
 
 	// Get .
 	Get(Any) (Any, error)
-	// GetByType .
-	GetByType(reflect.Type) (Any, error)
 	// IsBound .
 	IsBound(Any) bool
 
-	// Build .
-	Build()
+	// Rebuild .
+	Rebuild()
 
 	// Merge with another container
-	Merge(IContainer) IContainer
+	Merge(Container) Container
 	// SetParent supports for hierarchical DI systems
-	SetParent(IContainer)
+	SetParent(Container)
 
 	// GetParent .
-	GetParent() IContainer
+	GetParent() Container
 
-	// Snapshot .
-	// Snapshot() IContainer
+	// Load .
+	Load(*Module) error
+
+	// UnLoad .
+	UnLoad(*Module) error
+
+	// Snapshot @TODO
+	// Snapshot() Container
 }
 
 type optionalBind struct {
@@ -42,13 +46,13 @@ func Optional(dep Any) Any {
 	return optionalBind{dep}
 }
 
-type containerImpl struct {
-	parent *containerImpl
+type containerDefault struct {
+	parent *containerDefault
 
 	factories map[Any]*Binding
 }
 
-func (c *containerImpl) Bind(symbol Any) *Binding {
+func (c *containerDefault) Bind(symbol Any) *Binding {
 	b := &Binding{}
 	asVal := reflect.ValueOf(symbol)
 	if asVal.Kind() == reflect.Ptr && asVal.IsNil() {
@@ -58,13 +62,16 @@ func (c *containerImpl) Bind(symbol Any) *Binding {
 	return b
 }
 
-func (c *containerImpl) BindByType(reflectedType reflect.Type) *Binding {
-	b := &Binding{}
-	c.factories[reflectedType] = b
-	return b
+func (c *containerDefault) Unbind(symbol Any) Container {
+	asVal := reflect.ValueOf(symbol)
+	if asVal.Kind() == reflect.Ptr && asVal.IsNil() {
+		symbol = asVal.Interface()
+	}
+	delete(c.factories, symbol)
+	return c
 }
 
-func (c *containerImpl) findFactory(symbol Any) (*Binding, bool) {
+func (c *containerDefault) findFactory(symbol Any) (*Binding, bool) {
 	factory, ok := c.factories[symbol]
 
 	if !ok {
@@ -78,30 +85,26 @@ func (c *containerImpl) findFactory(symbol Any) (*Binding, bool) {
 	return factory, true
 }
 
-func (c *containerImpl) Build() {
-	buildContainerImpl(c)
+func (c *containerDefault) Rebuild() {
+	resolveContainerDependencies(c)
 }
 
-func (c *containerImpl) Get(symbol Any) (Any, error) {
+func (c *containerDefault) Get(symbol Any) (Any, error) {
 	if c.factories[symbol].resolves == nil {
-		c.Build()
+		c.Rebuild()
 	}
 	return c.factories[symbol].factory()
 }
 
-func (c *containerImpl) GetByType(reflectedType reflect.Type) (Any, error) {
-	return c.Get(reflectedType)
-}
-
-func (c *containerImpl) IsBound(symbol Any) bool {
+func (c *containerDefault) IsBound(symbol Any) bool {
 	_, ok := c.factories[symbol]
 	return ok
 }
 
-func (c *containerImpl) Merge(other IContainer) IContainer {
-	container := newContainer()
+func (c *containerDefault) Merge(other Container) Container {
+	container := newDefaultContainer()
 
-	otherImpl, ok := other.(*containerImpl)
+	otherImpl, ok := other.(*containerDefault)
 	if !ok {
 		panic("container is not compatible")
 	}
@@ -117,8 +120,8 @@ func (c *containerImpl) Merge(other IContainer) IContainer {
 	return container
 }
 
-func (c *containerImpl) SetParent(parent IContainer) {
-	parentImpl, ok := parent.(*containerImpl)
+func (c *containerDefault) SetParent(parent Container) {
+	parentImpl, ok := parent.(*containerDefault)
 	if !ok {
 		panic("container is not compatible")
 	}
@@ -126,16 +129,25 @@ func (c *containerImpl) SetParent(parent IContainer) {
 	c.parent = parentImpl
 }
 
-func (c *containerImpl) GetParent() IContainer {
+func (c *containerDefault) GetParent() Container {
 	return c.parent
 }
 
-func newContainer() *containerImpl {
-	return &containerImpl{
+func (c *containerDefault) Load(module *Module) error {
+	return module.registerCallback(newContainerBinderProxy(c))
+}
+
+func (c *containerDefault) UnLoad(module *Module) error {
+	return module.unRegisterCallback(newContainerBinderProxy(c))
+}
+
+func newDefaultContainer() *containerDefault {
+	return &containerDefault{
 		factories: make(map[Any]*Binding),
 	}
 }
 
-func Container() IContainer {
-	return newContainer()
+// NewContainer .
+func NewContainer() Container {
+	return newDefaultContainer()
 }

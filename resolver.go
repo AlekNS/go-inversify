@@ -2,7 +2,7 @@ package inversify
 
 import "fmt"
 
-func buildContainerImpl(c *containerImpl) {
+func resolveContainerDependencies(c *containerDefault) {
 	for _, bind := range c.factories {
 		bind.resolves = make(NAny, len(bind.dependencies))
 		for inx, dep := range bind.dependencies {

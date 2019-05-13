@@ -21,14 +21,14 @@ go get github.com/alekns/go-inversify
   container.Bind(2).To(" world")
   container.Bind(3).ToFactory(func (word1, word2, optDep Any) Any {
     return word1.(string) + word2.(string), nil
-  }, 1, 2, inversify.Optional(3))
+  }, 1, 2, inversify.Optional(4))
 
   // or
 
   container.Bind(3).ToTypedFactory(func (word1, word2 string, optDep Any) string {
     // optDep == nil
     return word1 + word2, nil
-  }, 1, 2, inversify.Optional(3))
+  }, 1, 2, inversify.Optional(4))
 
   container.IsBound(3) == true
   container.Get(3).(string) == "Hello world"
