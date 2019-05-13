@@ -6,6 +6,7 @@ import "sync"
 type Binding struct {
 	once         sync.Once
 	factory      FactoryFunc
+	resolves     NAny
 	dependencies NAny
 }
 
@@ -39,7 +40,7 @@ func (b *Binding) toFactoryMethod(factoryMethod func([]Any) (Any, error), depend
 		}
 		var err error
 		resolvedDeps := make([]Any, depsCount, depsCount)
-		for inx, dep := range b.dependencies {
+		for inx, dep := range b.resolves {
 			resolvedDeps[inx], err = dep.(FactoryFunc)()
 			if err != nil {
 				return nil, err
@@ -53,13 +54,15 @@ func (b *Binding) toFactoryMethod(factoryMethod func([]Any) (Any, error), depend
 
 // InSingletonScope declares dependency as singleton
 func (b *Binding) InSingletonScope() {
-	orig := b.factory
 	var instance Any
 	var err error
+
+	originalFactory := b.factory
+
 	b.factory = func() (Any, error) {
 		if instance == nil {
 			b.once.Do(func() {
-				instance, err = orig()
+				instance, err = originalFactory()
 			})
 		}
 		return instance, err
