@@ -1,9 +1,14 @@
 package inversify
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func resolveContainerDependencies(c *containerDefault) {
 	for _, bind := range c.factories {
+		// if bind.resolves != nil {
+		// 	continue
+		// }
 		bind.resolves = make(NAny, len(bind.dependencies))
 		for inx, dep := range bind.dependencies {
 			optdep, hasOpt := dep.(optionalBind)

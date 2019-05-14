@@ -56,6 +56,6 @@ func (t *ModuleTestSuite) TestBasic() {
 	t.NoError(err)
 }
 
-func TestModuleSute(t *testing.T) {
+func TestModuleSuite(t *testing.T) {
 	suite.Run(t, new(ModuleTestSuite))
 }

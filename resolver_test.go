@@ -13,6 +13,6 @@ type ResolverTestSuite struct {
 func (t *ResolverTestSuite) TestBasic() {
 }
 
-func TestResolverSute(t *testing.T) {
+func TestResolverSuite(t *testing.T) {
 	suite.Run(t, new(ResolverTestSuite))
 }

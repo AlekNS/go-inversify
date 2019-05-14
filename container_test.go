@@ -57,6 +57,6 @@ func (t *ContainerTestSuite) TestGet() {
 	t.Equal("V3(1:V1,2:V2(1:V1),3:<nil>)", val)
 }
 
-func TestContainerSute(t *testing.T) {
+func TestContainerSuite(t *testing.T) {
 	suite.Run(t, new(ContainerTestSuite))
 }

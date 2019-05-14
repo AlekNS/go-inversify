@@ -175,7 +175,7 @@ func (t *FuncsTestSuite) TestWrapFuncTypedSlice() {
 	t.NoError(err)
 }
 
-func TestFuncsSute(t *testing.T) {
+func TestFuncsSuite(t *testing.T) {
 	suite.Run(t, new(FuncsTestSuite))
 }
 

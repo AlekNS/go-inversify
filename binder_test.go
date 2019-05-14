@@ -97,6 +97,6 @@ func (t *BindingTestSuite) TestBindTypedFactoryNoDeps() {
 	t.NoError(err)
 }
 
-func TestBindingSute(t *testing.T) {
+func TestBindingSuite(t *testing.T) {
 	suite.Run(t, new(BindingTestSuite))
 }
