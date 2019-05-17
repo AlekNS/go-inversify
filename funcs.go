@@ -4,6 +4,8 @@ import (
 	"reflect"
 )
 
+var dependencyNotFound interface{}
+
 func wrapApplyFunc0AsSlice(funcRaw anyFunc) func([]Any) (Any, error) {
 	return func(args []Any) (Any, error) {
 		return funcRaw.(func() (Any, error))()
@@ -135,8 +137,12 @@ func wrapApplyFuncAsSlice(f anyFunc, customConv Any, isAbstract bool) func([]Any
 	}
 
 	return func(args []Any) (Any, error) {
-		for inx, argument := range args {
-			argValue[inx] = reflect.ValueOf(argument)
+		for index, argument := range args {
+			if argument == nil {
+				argValue[index] = reflect.ValueOf(&dependencyNotFound).Elem()
+			} else {
+				argValue[index] = reflect.ValueOf(argument)
+			}
 		}
 
 		results := reflVal.Call(argValue)

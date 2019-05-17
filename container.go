@@ -16,8 +16,8 @@ type Container interface {
 	// IsBound .
 	IsBound(Any) bool
 
-	// Rebuild .
-	Rebuild()
+	// Build .
+	Build()
 
 	// Merge with another container
 	Merge(Container) Container
@@ -38,7 +38,7 @@ type Container interface {
 }
 
 type optionalBind struct {
-	dep Any
+	dependency Any
 }
 
 // Optional .
@@ -85,13 +85,16 @@ func (c *containerDefault) findFactory(symbol Any) (*Binding, bool) {
 	return factory, true
 }
 
-func (c *containerDefault) Rebuild() {
-	resolveContainerDependencies(c)
+func (c *containerDefault) Build() {
+	err := resolveContainerDependencies(c)
+	if err != nil {
+		panic(err.Error())
+	}
 }
 
 func (c *containerDefault) Get(symbol Any) (Any, error) {
 	if c.factories[symbol].resolves == nil {
-		c.Rebuild()
+		c.Build()
 	}
 	return c.factories[symbol].factory()
 }

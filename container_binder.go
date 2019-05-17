@@ -2,8 +2,13 @@ package inversify
 
 // ContainerBinder .
 type ContainerBinder interface {
+	// Bind .
 	Bind(symbol Any) *Binding
+
+	// Unbind .
 	Unbind(symbol Any)
+
+	// IsBound .
 	IsBound(symbol Any) bool
 }
 

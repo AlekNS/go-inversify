@@ -4,17 +4,17 @@ import (
 	"container/list"
 )
 
-// getStrongConnectedDependencyList based on Tarjan algorithm (finding strong connected components).
-func getStrongConnectedDependencyList(factories map[Any]*Binding) []NAny {
+// getStronglyConnectedDependencyList based on Tarjan algorithm (finding strong connected components).
+func getStronglyConnectedDependencyList(factories map[Any]*Binding) []NAny {
 	index := 0
 	indexes := make(map[Any]int, len(factories))
 	lowIndexes := make(map[Any]int, len(factories))
 	stack := list.New()
 	scDeps := make([]NAny, 0, len(factories))
 
-	for symbol, bind := range factories {
+	for symbol, binding := range factories {
 		if _, ok := indexes[symbol]; !ok {
-			getStrongConnectedDependency(factories, symbol, bind, &index, indexes, lowIndexes, stack, &scDeps)
+			getStronglyConnectedDependency(factories, symbol, binding, &index, indexes, lowIndexes, stack, &scDeps)
 		}
 	}
 
@@ -22,29 +22,35 @@ func getStrongConnectedDependencyList(factories map[Any]*Binding) []NAny {
 }
 
 // @TODO: Use stack instead of recursion
-func getStrongConnectedDependency(factories map[Any]*Binding,
+func getStronglyConnectedDependency(factories map[Any]*Binding,
 	symbol Any,
-	bind *Binding,
+	binding *Binding,
 	index *int,
 	indexes map[Any]int,
 	lowIndexes map[Any]int,
 	stack *list.List,
 	scDeps *[]NAny) {
 
+	// it's optional binding
+	if binding == nil {
+		return
+	}
+
 	stack.PushBack(symbol)
 	indexes[symbol] = *index
 	lowIndexes[symbol] = *index
 	*index++
 
-	for _, dep := range bind.dependencies {
-		if symbol == dep {
-			*scDeps = append(*scDeps, NAny{symbol, dep})
+	for _, dependency := range binding.dependencies {
+		if symbol == dependency {
+			*scDeps = append(*scDeps, NAny{symbol, dependency})
 		}
-		if _, ok := indexes[dep]; !ok {
-			getStrongConnectedDependency(factories, dep, factories[dep], index, indexes, lowIndexes, stack, scDeps)
-			lowIndexes[symbol] = minInt(lowIndexes[symbol], lowIndexes[dep])
-		} else if listFindValue(stack, dep) != nil {
-			lowIndexes[symbol] = minInt(lowIndexes[symbol], indexes[dep])
+		if _, ok := indexes[dependency]; !ok {
+			getStronglyConnectedDependency(factories,
+				dependency, factories[dependency], index, indexes, lowIndexes, stack, scDeps)
+			lowIndexes[symbol] = minInt(lowIndexes[symbol], lowIndexes[dependency])
+		} else if listFindValue(stack, dependency) != nil {
+			lowIndexes[symbol] = minInt(lowIndexes[symbol], indexes[dependency])
 		}
 	}
 
@@ -59,6 +65,7 @@ func getStrongConnectedDependency(factories map[Any]*Binding,
 				break
 			}
 		}
+
 		*scDeps = append(*scDeps, scdLocal)
 	}
 }

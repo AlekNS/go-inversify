@@ -4,30 +4,37 @@ import (
 	"fmt"
 )
 
-func resolveContainerDependencies(c *containerDefault) {
-	for _, bind := range c.factories {
-		// if bind.resolves != nil {
-		// 	continue
-		// }
-		bind.resolves = make(NAny, len(bind.dependencies))
-		for inx, dep := range bind.dependencies {
-			optdep, hasOpt := dep.(optionalBind)
-			if hasOpt {
-				dep = optdep.dep
+func resolveContainerDependencies(container *containerDefault) error {
+	for _, binding := range container.factories {
+		binding.resolves = make(NAny, len(binding.dependencies))
+
+		for dependencyIndex, dependency := range binding.dependencies {
+
+			optionalDependency, isOptional := dependency.(optionalBind)
+			if isOptional {
+				dependency = optionalDependency.dependency
 			}
 
-			b, hasDep := c.findFactory(dep)
-			if hasDep {
-				bind.resolves[inx] = b.factory
+			if optionalBinding, isDependencyFound := container.findFactory(dependency); isDependencyFound {
+				binding.resolves[dependencyIndex] = optionalBinding.factory
 			} else {
-				if hasOpt {
-					bind.resolves[inx] = FactoryFunc(func() (Any, error) {
-						return nil, nil
+				if isOptional {
+					binding.resolves[dependencyIndex] = FactoryFunc(func() (Any, error) {
+						return Any(nil), nil
 					})
 				} else {
-					panic(fmt.Sprintf("depending %+v not found", dep))
+					return fmt.Errorf("dependency %+v is not found", dependency)
 				}
 			}
 		}
 	}
+
+	scd := getStronglyConnectedDependencyList(container.factories)
+	for _, items := range scd {
+		if len(items) > 1 {
+			return fmt.Errorf("the container has cycle dependencies: %+v", items)
+		}
+	}
+
+	return nil
 }

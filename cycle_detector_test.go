@@ -10,8 +10,8 @@ type CycleDetectorTestSuite struct {
 	suite.Suite
 }
 
-func (t *CycleDetectorTestSuite) TestNoCycles() {
-	factories := map[Any]*Binding{
+func (t *CycleDetectorTestSuite) getFactories() map[Any]*Binding {
+	return map[Any]*Binding{
 		"a": &Binding{dependencies: NAny{}},
 		"b": &Binding{dependencies: NAny{}},
 		"c": &Binding{dependencies: NAny{}},
@@ -19,8 +19,18 @@ func (t *CycleDetectorTestSuite) TestNoCycles() {
 		"e": &Binding{dependencies: NAny{"b", "c", "d"}},
 		"f": &Binding{dependencies: NAny{"b", "d", "e"}},
 	}
+}
 
-	scDeps := getStrongConnectedDependencyList(factories)
+func (t *CycleDetectorTestSuite) TestEmpty() {
+	factories := map[Any]*Binding{}
+	scDeps := getStronglyConnectedDependencyList(factories)
+
+	t.Len(scDeps, 0)
+}
+
+func (t *CycleDetectorTestSuite) TestNoCycles() {
+	factories := t.getFactories()
+	scDeps := getStronglyConnectedDependencyList(factories)
 
 	t.Len(scDeps, 6)
 	for i := 0; i < len(scDeps); i++ {
@@ -29,16 +39,10 @@ func (t *CycleDetectorTestSuite) TestNoCycles() {
 }
 
 func (t *CycleDetectorTestSuite) TestSelfCycles() {
-	factories := map[Any]*Binding{
-		"a": &Binding{dependencies: NAny{}},
-		"b": &Binding{dependencies: NAny{"b"}},
-		"c": &Binding{dependencies: NAny{}},
-		"d": &Binding{dependencies: NAny{"a", "b"}},
-		"e": &Binding{dependencies: NAny{"b", "c", "e", "d"}},
-		"f": &Binding{dependencies: NAny{"b", "d", "e"}},
-	}
-
-	scDeps := getStrongConnectedDependencyList(factories)
+	factories := t.getFactories()
+	factories["b"] = &Binding{dependencies: NAny{"b"}}
+	factories["e"] = &Binding{dependencies: NAny{"b", "c", "e", "d"}}
+	scDeps := getStronglyConnectedDependencyList(factories)
 
 	t.Len(scDeps, 8)
 	for i := 0; i < len(scDeps); i++ {
@@ -50,16 +54,10 @@ func (t *CycleDetectorTestSuite) TestSelfCycles() {
 }
 
 func (t *CycleDetectorTestSuite) TestWithCycles() {
-	factories := map[Any]*Binding{
-		"a": &Binding{dependencies: NAny{"f"}},
-		"b": &Binding{dependencies: NAny{}},
-		"c": &Binding{dependencies: NAny{}},
-		"d": &Binding{dependencies: NAny{"a", "b"}},
-		"e": &Binding{dependencies: NAny{"b", "c", "d"}},
-		"f": &Binding{dependencies: NAny{"b", "d", "e"}},
-	}
+	factories := t.getFactories()
+	factories["a"] = &Binding{dependencies: NAny{"f"}}
 
-	scDeps := getStrongConnectedDependencyList(factories)
+	scDeps := getStronglyConnectedDependencyList(factories)
 
 	t.Len(scDeps, 3)
 	isStrongDepsDetected := false

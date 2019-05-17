@@ -31,22 +31,22 @@ func (b *Binding) ToTypedFactory(factoryMethod Any, dependencies ...Any) *Bindin
 
 func (b *Binding) toFactoryMethod(factoryMethod func([]Any) (Any, error), dependencies ...Any) *Binding {
 	b.dependencies = dependencies
-	emptyDeps := []Any{}
-	depsCount := len(dependencies)
+	noDependency := []Any{}
+	dependenciesCount := len(dependencies)
 
 	b.factory = func() (Any, error) {
-		if depsCount == 0 {
-			return factoryMethod(emptyDeps)
+		if dependenciesCount == 0 {
+			return factoryMethod(noDependency)
 		}
 		var err error
-		resolvedDeps := make([]Any, depsCount, depsCount)
-		for inx, dep := range b.resolves {
-			resolvedDeps[inx], err = dep.(FactoryFunc)()
+		resolvedDependencies := make([]Any, dependenciesCount, dependenciesCount)
+		for index, dependency := range b.resolves {
+			resolvedDependencies[index], err = dependency.(FactoryFunc)()
 			if err != nil {
 				return nil, err
 			}
 		}
-		return factoryMethod(resolvedDeps)
+		return factoryMethod(resolvedDependencies)
 	}
 
 	return b

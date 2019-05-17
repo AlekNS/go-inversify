@@ -49,11 +49,19 @@ func (t *ModuleTestSuite) TestBasic() {
 	}, 1, 2)
 	c.Load(mdl1)
 	c.Load(mdl2)
+	c.Build()
 
 	val, err := c.Get("result")
 
 	t.Equal("Modules, hello world!!!", val)
 	t.NoError(err)
+
+	c.UnLoad(mdl1)
+	c.UnLoad(mdl2)
+	c.Unbind("result")
+	c.Build()
+
+	t.False(c.IsBound(1))
 }
 
 func TestModuleSuite(t *testing.T) {
