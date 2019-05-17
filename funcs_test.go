@@ -55,7 +55,7 @@ func (t *FuncsTestSuite) TestWrapFunc1Slice() {
 }
 
 func (t *FuncsTestSuite) TestWrapFunc1SliceCustom() {
-	method := wrapCustomApplyFuncAsSlice(func (int) (int, error) {
+	method := wrapCustomApplyFuncAsSlice(func(int) (int, error) {
 		return 0, nil
 	}, func(raw Any) func([]Any) (Any, error) {
 		return func(args []Any) (Any, error) {

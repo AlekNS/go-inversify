@@ -1,5 +1,8 @@
 # Go-Inversify - Dependency Injection Tool for Go
 
+[![Build Status](https://travis-ci.org/AlekNS/go-inversify.svg?branch=master)](https://travis-ci.org/AlekNS/go-inversify)
+[![Go Report Card](https://goreportcard.com/badge/github.com/AlekNS/go-inversify)](https://goreportcard.com/report/github.com/AlekNS/go-inversify)
+
 Yet another dependency injection system for Go inspired by [InversifyJS](https://github.com/inversify/InversifyJS).
 
 ## Installation

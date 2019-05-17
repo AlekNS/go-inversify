@@ -1,0 +1,25 @@
+language: go
+sudo: false
+
+go:
+  - 1.11.x
+  - 1.12
+
+git:
+  depth: 1
+
+notifications:
+  on_success: never
+  on_failure: never
+
+script:
+  - export GO111MODULE=on
+  - go vet ./...
+  - go test -v -timeout 30s -race -cover ./...
+
+go_import_path: github.com/alekns/go-inversify
+
+cache:
+  directories:
+    - vendor
+
