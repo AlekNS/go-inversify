@@ -57,6 +57,43 @@ func (t *ContainerTestSuite) TestBasic() {
 	t.False(c1.IsBound(testDep1))
 }
 
+func (t *ContainerTestSuite) TestNamedBasic() {
+	c1 := NewContainer()
+	c1.Bind(testDep1).To(resolvedValue)
+	c1.Bind(testDep1, "other").To(resolvedValue + resolvedValue)
+	c1.Build()
+
+	t.True(c1.IsBound(testDep1))
+
+	value, _ := c1.Get(testDep1)
+	valueOther, _ := c1.Get(testDep1, "other")
+
+	t.Equal(resolvedValue, value)
+	t.Equal(resolvedValue+resolvedValue, valueOther)
+
+	c1.Unbind(testDep1)
+	c1.Build()
+
+	t.False(c1.IsBound(testDep1))
+}
+
+func (t *ContainerTestSuite) TestNamedCycle() {
+	c1 := NewContainer()
+	c1.Bind(testDep1).ToFactory(func(i Any) (Any, error) {
+		return 1, nil
+	}, Named(testDep3, "named"))
+	c1.Bind(testDep2).ToFactory(func(i Any) (Any, error) {
+		return 2, nil
+	}, testDep1)
+	c1.Bind(testDep3, "named").ToFactory(func(i Any) (Any, error) {
+		return 3, nil
+	}, testDep2)
+
+	t.Panics(func() { // the container has cycle dependencies: [0[] 1[] 2[named]]
+		c1.Build()
+	})
+}
+
 func (t *ContainerTestSuite) TestFallthroughError() {
 	c1 := NewContainer()
 	c1.Bind((*testInterface1)(nil)).ToFactory(func() (Any, error) {
@@ -116,7 +153,7 @@ func (t *ContainerTestSuite) TestParent() {
 	c1.Bind(testDep2).ToTypedFactory(func(i1 string, any Any) (string, error) {
 		t.Nil(any)
 		return fmt.Sprintf("V2(1:%s)", i1), nil
-	}, testDep1, Optional(testOtherDep1))
+	}, testDep1, Optional(Named(testOtherDep2, "test")))
 
 	c1.Build()
 
@@ -134,7 +171,11 @@ func (t *ContainerTestSuite) TestParent() {
 
 	c2.Build()
 
-	val, err := c2.Get(testDep3)
+	val, err := c2.Get(testDep2)
+	t.NoError(err)
+	t.Equal("V2(1:V1)", val)
+
+	val, err = c2.Get(testDep3)
 
 	t.NoError(err)
 	t.Equal("V3(1:V1,2:V2(1:V1),3:<nil>)", val)

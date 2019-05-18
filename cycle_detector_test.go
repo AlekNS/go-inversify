@@ -8,7 +8,7 @@ import (
 
 type CycleDetectorTestSuite struct {
 	suite.Suite
-	factories map[Any]*Binding
+	factories map[Any]map[string]*Binding
 }
 
 func (t *CycleDetectorTestSuite) BeforeTest(suiteName, testName string) {
@@ -17,18 +17,18 @@ func (t *CycleDetectorTestSuite) BeforeTest(suiteName, testName string) {
 	//      d<--|---e
 	//       ^\ |  /^
 	//          f
-	t.factories = map[Any]*Binding{
-		"a": &Binding{dependencies: NAny{}},
-		"b": &Binding{dependencies: NAny{}},
-		"c": &Binding{dependencies: NAny{}},
-		"d": &Binding{dependencies: NAny{"a", "b"}},
-		"e": &Binding{dependencies: NAny{"b", "c", "d"}},
-		"f": &Binding{dependencies: NAny{"b", "d", "e"}},
+	t.factories = map[Any]map[string]*Binding{
+		"a": map[string]*Binding{"": &Binding{dependencies: NAny{}}},
+		"b": map[string]*Binding{"": &Binding{dependencies: NAny{}}},
+		"c": map[string]*Binding{"": &Binding{dependencies: NAny{}}},
+		"d": map[string]*Binding{"": &Binding{dependencies: NAny{"a", "b"}}},
+		"e": map[string]*Binding{"": &Binding{dependencies: NAny{"b", "c", "d"}}},
+		"f": map[string]*Binding{"": &Binding{dependencies: NAny{"b", "d", "e"}}},
 	}
 }
 
 func (t *CycleDetectorTestSuite) TestEmpty() {
-	factories := map[Any]*Binding{}
+	factories := map[Any]map[string]*Binding{}
 	scDeps := getStronglyConnectedDependencyList(factories)
 
 	t.Len(scDeps, 0)
@@ -46,22 +46,22 @@ func (t *CycleDetectorTestSuite) TestNoCycles() {
 
 func (t *CycleDetectorTestSuite) TestSelfCycles() {
 	factories := t.factories
-	factories["b"] = &Binding{dependencies: NAny{"b"}}
-	factories["e"] = &Binding{dependencies: NAny{"b", "c", "e", "d"}}
+	factories["b"] = map[string]*Binding{"": &Binding{dependencies: NAny{"b"}}}
+	factories["e"] = map[string]*Binding{"": &Binding{dependencies: NAny{"b", "c", "e", "d"}}}
 	scDeps := getStronglyConnectedDependencyList(factories)
 
 	t.Len(scDeps, 8)
 	for i := 0; i < len(scDeps); i++ {
 		t.Contains([]int{1, 2}, len(scDeps[i]))
 		if len(scDeps[i]) == 2 {
-			t.Contains([]string{"b", "e"}, scDeps[i][0].(string))
+			t.Contains([]string{"b", "e"}, scDeps[i][0].(PairDependencyName).Symbol)
 		}
 	}
 }
 
 func (t *CycleDetectorTestSuite) TestWithCycles() {
 	factories := t.factories
-	factories["a"] = &Binding{dependencies: NAny{"f"}}
+	factories["a"] = map[string]*Binding{"": &Binding{dependencies: NAny{"f"}}}
 
 	scDeps := getStronglyConnectedDependencyList(factories)
 

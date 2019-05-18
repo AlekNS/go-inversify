@@ -14,12 +14,13 @@ type iSchedulerImpl struct{}
 
 // autowireTestStruct .
 type autowireTestStruct struct {
-	Values map[string]interface{} `inversify:"inject,key:values"`
+	Values map[string]interface{} `inversify:"strkey:values"`
+	Value  int                    `inversify:"intkey:1,optional"`
 
 	Config *config `inversify:"inject"`
 
-	TaskRepository iTaskRepository `inversify:"inject,tag:gorm"`
-	Scheduler      iScheduler      `inversify:"inject,optional"`
+	TaskRepository iTaskRepository `inversify:"named:gorm"`
+	Scheduler      iScheduler      `inversify:"optional"`
 }
 
 type AutowireStructTestSuite struct {
