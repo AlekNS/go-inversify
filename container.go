@@ -52,22 +52,22 @@ type containerDefault struct {
 	factories map[Any]*Binding
 }
 
-func (c *containerDefault) Bind(symbol Any) *Binding {
-	b := &Binding{}
-	asVal := reflect.ValueOf(symbol)
-	if asVal.Kind() == reflect.Ptr && asVal.IsNil() {
-		symbol = asVal.Interface()
+func reflectInterfacePointers(symbol Any) Any {
+	asValue := reflect.ValueOf(symbol)
+	if asValue.Kind() == reflect.Ptr && asValue.IsNil() {
+		symbol = asValue.Interface()
 	}
-	c.factories[symbol] = b
-	return b
+	return symbol
+}
+
+func (c *containerDefault) Bind(symbol Any) *Binding {
+	binding := &Binding{}
+	c.factories[reflectInterfacePointers(symbol)] = binding
+	return binding
 }
 
 func (c *containerDefault) Unbind(symbol Any) Container {
-	asVal := reflect.ValueOf(symbol)
-	if asVal.Kind() == reflect.Ptr && asVal.IsNil() {
-		symbol = asVal.Interface()
-	}
-	delete(c.factories, symbol)
+	delete(c.factories, reflectInterfacePointers(symbol))
 	return c
 }
 
@@ -93,9 +93,6 @@ func (c *containerDefault) Build() {
 }
 
 func (c *containerDefault) Get(symbol Any) (Any, error) {
-	if c.factories[symbol].resolves == nil {
-		c.Build()
-	}
 	return c.factories[symbol].factory()
 }
 

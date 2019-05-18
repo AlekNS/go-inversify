@@ -2,7 +2,7 @@ package inversify
 
 import "sync"
 
-// Binding holds factory and dependencies
+// Binding holds factory, specified dependencies and resolved dependencies
 type Binding struct {
 	once         sync.Once
 	factory      FactoryFunc
@@ -10,7 +10,7 @@ type Binding struct {
 	dependencies NAny
 }
 
-// To binds to any object that can converted interface{}
+// To binds to any object that can converted to interface{}
 func (b *Binding) To(obj Any) *Binding {
 	b.factory = func() (Any, error) {
 		return obj, nil
@@ -34,10 +34,12 @@ func (b *Binding) toFactoryMethod(factoryMethod func([]Any) (Any, error), depend
 	noDependency := []Any{}
 	dependenciesCount := len(dependencies)
 
+	if dependenciesCount == 0 {
+		b.factory = func() (Any, error) { return factoryMethod(noDependency) }
+		return b
+	}
+
 	b.factory = func() (Any, error) {
-		if dependenciesCount == 0 {
-			return factoryMethod(noDependency)
-		}
 		var err error
 		resolvedDependencies := make([]Any, dependenciesCount, dependenciesCount)
 		for index, dependency := range b.resolves {

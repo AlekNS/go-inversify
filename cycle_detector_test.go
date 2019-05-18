@@ -8,10 +8,16 @@ import (
 
 type CycleDetectorTestSuite struct {
 	suite.Suite
+	factories map[Any]*Binding
 }
 
-func (t *CycleDetectorTestSuite) getFactories() map[Any]*Binding {
-	return map[Any]*Binding{
+func (t *CycleDetectorTestSuite) BeforeTest(suiteName, testName string) {
+	//  a       b      c
+	//   ^\   /^^^\   /^
+	//      d<--|---e
+	//       ^\ |  /^
+	//          f
+	t.factories = map[Any]*Binding{
 		"a": &Binding{dependencies: NAny{}},
 		"b": &Binding{dependencies: NAny{}},
 		"c": &Binding{dependencies: NAny{}},
@@ -29,7 +35,7 @@ func (t *CycleDetectorTestSuite) TestEmpty() {
 }
 
 func (t *CycleDetectorTestSuite) TestNoCycles() {
-	factories := t.getFactories()
+	factories := t.factories
 	scDeps := getStronglyConnectedDependencyList(factories)
 
 	t.Len(scDeps, 6)
@@ -39,7 +45,7 @@ func (t *CycleDetectorTestSuite) TestNoCycles() {
 }
 
 func (t *CycleDetectorTestSuite) TestSelfCycles() {
-	factories := t.getFactories()
+	factories := t.factories
 	factories["b"] = &Binding{dependencies: NAny{"b"}}
 	factories["e"] = &Binding{dependencies: NAny{"b", "c", "e", "d"}}
 	scDeps := getStronglyConnectedDependencyList(factories)
@@ -54,7 +60,7 @@ func (t *CycleDetectorTestSuite) TestSelfCycles() {
 }
 
 func (t *CycleDetectorTestSuite) TestWithCycles() {
-	factories := t.getFactories()
+	factories := t.factories
 	factories["a"] = &Binding{dependencies: NAny{"f"}}
 
 	scDeps := getStronglyConnectedDependencyList(factories)

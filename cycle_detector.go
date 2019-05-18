@@ -31,7 +31,7 @@ func getStronglyConnectedDependency(factories map[Any]*Binding,
 	stack *list.List,
 	scDeps *[]NAny) {
 
-	// it's optional binding
+	// relax, it's optional binding
 	if binding == nil {
 		return
 	}
@@ -42,6 +42,7 @@ func getStronglyConnectedDependency(factories map[Any]*Binding,
 	*index++
 
 	for _, dependency := range binding.dependencies {
+		// self dependency
 		if symbol == dependency {
 			*scDeps = append(*scDeps, NAny{symbol, dependency})
 		}

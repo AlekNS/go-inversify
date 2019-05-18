@@ -1,6 +1,6 @@
 package inversify
 
-// ContainerBinder .
+// ContainerBinder holds interface to encapsulate bindings
 type ContainerBinder interface {
 	// Bind .
 	Bind(symbol Any) *Binding
