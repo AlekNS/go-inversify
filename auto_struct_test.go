@@ -14,12 +14,13 @@ type iSchedulerImpl struct{}
 
 // autowireTestStruct .
 type autowireTestStruct struct {
-	Values map[string]interface{} `inversify:"strkey:values"`
-	Value  int                    `inversify:"intkey:1,optional"`
+	Values1 map[string]interface{} `inversify:"strkey:values1"`
+	Values2 string                 `inversify:"strkey:values2,optional"`
+	Value1  int                    `inversify:"intkey:1,named:another"`
+	Value2  int                    `inversify:"intkey:1,optional"`
+	Config  *config                `inversify:""`
 
-	Config *config `inversify:"inject"`
-
-	TaskRepository iTaskRepository `inversify:"named:gorm"`
+	TaskRepository iTaskRepository `inversify:""`
 	Scheduler      iScheduler      `inversify:"optional"`
 }
 
@@ -29,25 +30,29 @@ type AutowireStructTestSuite struct {
 
 func (t *AutowireStructTestSuite) TestBasic() {
 	c := NewContainer()
-	c.Bind("values").To(map[string]interface{}{
+	c.Bind("values1").To(map[string]interface{}{
 		"value1": "1",
 		"value2": "2",
 	})
 	c.Bind((*config)(nil)).To(&config{1})
-	c.Bind((*iTaskRepository)(nil)).ToFactory(func() (iTaskRepository, error) {
+	c.Bind((*iTaskRepository)(nil)).ToFactory(func() (Any, error) {
 		return &iTaskRepositoryImpl{
 			val: 2,
 		}, nil
 	})
+	c.Bind(1, "another").To(1000)
 	c.Build()
 
 	s := autowireTestStruct{}
-	AutowireStruct(&s)
+	err := AutowireStruct(c, &s)
 
-	// t.NotNil(s.Values)
-	// t.NotNil(s.TaskRepository)
-	// t.NotNil(s.Scheduler)
-	// t.Nil(s.Config)
+	t.NoError(err)
+	t.NotNil(s.Values1)
+	t.Equal("", s.Values2)
+	t.Equal(1000, s.Value1)
+	t.NotNil(s.TaskRepository)
+	t.Nil(s.Scheduler)
+	t.NotNil(s.Config)
 }
 
 func TestAutowireStructSuite(t *testing.T) {

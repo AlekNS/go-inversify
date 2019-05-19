@@ -94,11 +94,13 @@ func (c *containerDefault) bindInternal(isRebinding bool, symbol Any, names ...s
 		panic(fmt.Sprintf(`binding "%+v[%s]" is already registered, use Rebind to replace binding`, symbol, name))
 	}
 
+	symbol = reflectInterfacePointers(symbol)
+
 	binding := &Binding{}
-	bindings, exists := c.factories[reflectInterfacePointers(symbol)]
+	bindings, exists := c.factories[symbol]
 	if !exists {
 		bindings = make(map[string]*Binding)
-		c.factories[reflectInterfacePointers(symbol)] = bindings
+		c.factories[symbol] = bindings
 	}
 
 	bindings[name] = binding
@@ -106,12 +108,13 @@ func (c *containerDefault) bindInternal(isRebinding bool, symbol Any, names ...s
 }
 
 func (c *containerDefault) Unbind(symbol Any, names ...string) Container {
-	bindings, exists := c.factories[reflectInterfacePointers(symbol)]
+	symbol = reflectInterfacePointers(symbol)
+	bindings, exists := c.factories[symbol]
 	if exists {
 		name := getFirstStringArgumentOrEmpty(names)
 		delete(bindings, name)
 		if len(bindings) == 0 {
-			delete(c.factories, reflectInterfacePointers(symbol))
+			delete(c.factories, symbol)
 		}
 	}
 	// else panic!?
@@ -138,10 +141,11 @@ func (c *containerDefault) Build() {
 }
 
 func (c *containerDefault) Get(symbol Any, names ...string) (Any, error) {
+	name := getFirstStringArgumentOrEmpty(names)
 	if c.parent == nil {
-		return c.factories[symbol][getFirstStringArgumentOrEmpty(names)].factory()
+		return c.factories[symbol][name].factory()
 	}
-	bining, _ := c.findFactory(symbol, getFirstStringArgumentOrEmpty(names))
+	bining, _ := c.findFactory(symbol, name)
 	return bining.factory()
 }
 
