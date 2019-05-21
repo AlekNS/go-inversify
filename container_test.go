@@ -41,7 +41,7 @@ const (
 )
 
 func (t *ContainerTestSuite) TestBasic() {
-	c1 := NewContainer()
+	c1 := NewContainer("basic")
 	c1.Bind(testDep1).To(resolvedValue)
 	c1.Build()
 
@@ -58,7 +58,7 @@ func (t *ContainerTestSuite) TestBasic() {
 }
 
 func (t *ContainerTestSuite) TestNamedBasic() {
-	c1 := NewContainer()
+	c1 := NewContainer("withNames")
 	c1.Bind(testDep1).To(resolvedValue)
 	c1.Bind(testDep1, "other").To(resolvedValue + resolvedValue)
 	c1.Build()
@@ -78,7 +78,7 @@ func (t *ContainerTestSuite) TestNamedBasic() {
 }
 
 func (t *ContainerTestSuite) TestNamedCycle() {
-	c1 := NewContainer()
+	c1 := NewContainer("withNamesAndCycle")
 	c1.Bind(testDep1).ToFactory(func(i Any) (Any, error) {
 		return 1, nil
 	}, Named(testDep3, "named"))
@@ -95,7 +95,7 @@ func (t *ContainerTestSuite) TestNamedCycle() {
 }
 
 func (t *ContainerTestSuite) TestFallthroughError() {
-	c1 := NewContainer()
+	c1 := NewContainer("withError")
 	c1.Bind((*testInterface1)(nil)).ToFactory(func() (Any, error) {
 		return nil, errors.New("FactoryError")
 	})
@@ -111,7 +111,7 @@ func (t *ContainerTestSuite) TestFallthroughError() {
 }
 
 func (t *ContainerTestSuite) TestMerge() {
-	c1 := NewContainer()
+	c1 := NewContainer("src1")
 	c1.Bind(testDep1).To("val1")
 	c1.Bind((*testInterface1)(nil)).To(&testInterface1Impl{})
 	c1.Bind((*testInterface2)(nil)).To(&testInterface2Impl{})
@@ -125,13 +125,11 @@ func (t *ContainerTestSuite) TestMerge() {
 		t.Equal(1, t2.get1())
 		return "val3val4", nil
 	}, (*structure)(nil), (*testInterface1)(nil))
-	c1.Build()
 
-	c2 := NewContainer()
+	c2 := NewContainer("src2")
 	c2.Bind(testDep2).To("val2")
-	c2.Build()
 
-	c3 := c1.Merge(c2)
+	c3 := c1.Merge(c2, "dst")
 	c3.Build()
 
 	t.True(c3.IsBound(testDep1))
@@ -147,7 +145,7 @@ func (t *ContainerTestSuite) TestMerge() {
 }
 
 func (t *ContainerTestSuite) TestParent() {
-	c1 := NewContainer()
+	c1 := NewContainer("parent")
 
 	c1.Bind(testDep1).To("V1")
 	c1.Bind(testDep2).ToTypedFactory(func(i1 string, any Any) (string, error) {
@@ -155,9 +153,7 @@ func (t *ContainerTestSuite) TestParent() {
 		return fmt.Sprintf("V2(1:%s)", i1), nil
 	}, testDep1, Optional(Named(testOtherDep2, "test")))
 
-	c1.Build()
-
-	c2 := NewContainer()
+	c2 := NewContainer("child")
 	c2.Bind(testDep3).ToFactory(func(i1 Any, i2 Any, i3 Any) (Any, error) {
 		t.Nil(i3)
 		return fmt.Sprintf("V3(1:%s,2:%s,3:%v)", i1, i2, i3), nil
@@ -186,7 +182,7 @@ func TestContainerSuite(t *testing.T) {
 }
 
 func BenchmarkContainerGet(b *testing.B) {
-	c1 := NewContainer()
+	c1 := NewContainer("")
 	c1.Bind(testDep1).To("val1")
 	c1.Build()
 
@@ -200,14 +196,14 @@ func BenchmarkContainerGet(b *testing.B) {
 }
 
 func BenchmarkContainerGetHierarchy(b *testing.B) {
-	c1 := NewContainer()
+	c1 := NewContainer("")
 
 	c1.Bind(testDep1).To("V1")
 	c1.Bind(testDep2).To("V2")
 
 	c1.Build()
 
-	c2 := NewContainer()
+	c2 := NewContainer("")
 	c2.Bind(testDep3).ToFactory(func(i1 Any, i2 Any, i3 Any) (Any, error) {
 		return i1, nil
 	}, testDep1, testDep2, Optional(testOtherDep1))

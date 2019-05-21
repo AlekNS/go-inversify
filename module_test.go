@@ -40,7 +40,7 @@ func (t *ModuleTestSuite) TestBasic() {
 	mdl1 := getModuleTest1()
 	mdl2 := getModuleTest2()
 
-	c := NewContainer()
+	c := NewContainer("basic")
 	c.Bind(0).ToTypedFactory(func() (string, error) {
 		return "Modules, ", nil
 	})

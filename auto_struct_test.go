@@ -29,7 +29,7 @@ type AutowireStructTestSuite struct {
 }
 
 func (t *AutowireStructTestSuite) TestBasic() {
-	c := NewContainer()
+	c := NewContainer("base")
 	c.Bind("values1").To(map[string]interface{}{
 		"value1": "1",
 		"value2": "2",
@@ -57,4 +57,33 @@ func (t *AutowireStructTestSuite) TestBasic() {
 
 func TestAutowireStructSuite(t *testing.T) {
 	suite.Run(t, new(AutowireStructTestSuite))
+}
+
+func BenchmarkContainerAutowireStructure(b *testing.B) {
+	c := NewContainer("base")
+	c.Bind("values1").To(map[string]interface{}{
+		"value1": "1",
+		"value2": "2",
+	})
+	c.Bind((*config)(nil)).To(&config{1})
+	c.Bind((*iTaskRepository)(nil)).ToFactory(func() (Any, error) {
+		return &iTaskRepositoryImpl{
+			val: 2,
+		}, nil
+	})
+	c.Bind(1, "another").To(1000)
+	c.Build()
+
+	s := autowireTestStruct{}
+
+	b.ReportAllocs()
+
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		s.Config = nil
+		s.Scheduler = nil
+		s.TaskRepository = nil
+		AutowireStruct(c, &s)
+	}
+	b.StopTimer()
 }

@@ -23,7 +23,7 @@ type Container interface {
 	Build()
 
 	// Merge with another container
-	Merge(Container) Container
+	Merge(container Container, name string) Container
 	// SetParent supports for hierarchical DI systems
 	SetParent(Container)
 
@@ -63,7 +63,9 @@ func Named(dep Any, name string) Any {
 }
 
 type containerDefault struct {
-	parent *containerDefault
+	name    string
+	parent  *containerDefault
+	isBuilt bool
 
 	factories map[Any]map[string]*Binding
 }
@@ -104,6 +106,7 @@ func (c *containerDefault) bindInternal(isRebinding bool, symbol Any, names ...s
 	}
 
 	bindings[name] = binding
+	c.isBuilt = false
 	return binding
 }
 
@@ -118,6 +121,7 @@ func (c *containerDefault) Unbind(symbol Any, names ...string) Container {
 		}
 	}
 	// else panic!?
+	c.isBuilt = false
 	return c
 }
 
@@ -134,10 +138,20 @@ func (c *containerDefault) findFactory(symbol Any, name string) (*Binding, bool)
 }
 
 func (c *containerDefault) Build() {
+	if c.parent != nil {
+		c.parent.Build()
+	}
+
+	if c.isBuilt {
+		return
+	}
+
 	err := resolveContainerDependencies(c)
 	if err != nil {
 		panic(err.Error())
 	}
+
+	c.isBuilt = true
 }
 
 func (c *containerDefault) Get(symbol Any, names ...string) (Any, error) {
@@ -163,8 +177,8 @@ func (c *containerDefault) hasFactory(symbol Any, names ...string) bool {
 	return ok
 }
 
-func (c *containerDefault) Merge(other Container) Container {
-	container := newDefaultContainer()
+func (c *containerDefault) Merge(other Container, name string) Container {
+	container := newDefaultContainer(name)
 
 	otherImpl, ok := other.(*containerDefault)
 	if !ok {
@@ -203,13 +217,18 @@ func (c *containerDefault) UnLoad(module *Module) error {
 	return module.unRegisterCallback(newContainerBinderProxy(c))
 }
 
-func newDefaultContainer() *containerDefault {
+func (c *containerDefault) String() string {
+	return c.name
+}
+
+func newDefaultContainer(name string) *containerDefault {
 	return &containerDefault{
+		name:      name,
 		factories: make(map[Any]map[string]*Binding),
 	}
 }
 
 // NewContainer .
-func NewContainer() Container {
-	return newDefaultContainer()
+func NewContainer(name string) Container {
+	return newDefaultContainer(name)
 }

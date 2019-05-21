@@ -33,7 +33,7 @@ TODO
 #### Values
 
 ```
-  container := inversify.Container()
+  container := inversify.NewContainer("name of container")
 
   container.Bind(1).To("Hello")
   container.Build()
@@ -77,7 +77,7 @@ TODO
 #### Named dependencies
 
 ```
-  container := inversify.Container()
+  container := inversify.NewContainer("name of container")
 
   container.Bind(1).To("empty")
   container.Bind(1, "dev").To("Hello")
@@ -93,6 +93,7 @@ TODO
 
 ```
   mergedContainer := container1.Merge(container2)
+  mergedContainer.Build()
 ```
 
 #### Hierarchy
@@ -104,8 +105,6 @@ TODO
   ...
   subContainer2 := Container()
   ...
-
-  baseContainer.Build()
 
   subContainer1.SetParent(baseContainer)
   subContainer1.Build()
@@ -144,14 +143,14 @@ TODO
 
 ```
   authModule := NewModule("auth").
-		Register(func(c ContainerBinder) error {
-      // c.Bind()
-			return nil
-		}).
-		UnRegister(func(c ContainerBinder) error {
-      // c.Unbind()
-			return nil
-		})
+      Register(func(c ContainerBinder) error {
+            c.Bind()
+            return nil
+      }).
+      UnRegister(func(c ContainerBinder) error {
+            // c.Unbind()
+            return nil
+      })
 
   container.Load(authModule)
   container.Load(otherModule)
