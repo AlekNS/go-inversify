@@ -210,10 +210,12 @@ func (c *containerDefault) GetParent() Container {
 }
 
 func (c *containerDefault) Load(module *Module) error {
+	c.isBuilt = true
 	return module.registerCallback(newContainerBinderProxy(c))
 }
 
 func (c *containerDefault) UnLoad(module *Module) error {
+	c.isBuilt = true
 	return module.unRegisterCallback(newContainerBinderProxy(c))
 }
 
