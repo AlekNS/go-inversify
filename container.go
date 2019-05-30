@@ -16,6 +16,8 @@ type Container interface {
 
 	// Get .
 	Get(Any, ...string) (Any, error)
+	// Get .
+	MustGet(Any, ...string) Any
 	// IsBound .
 	IsBound(Any, ...string) bool
 
@@ -161,6 +163,14 @@ func (c *containerDefault) Get(symbol Any, names ...string) (Any, error) {
 	}
 	bining, _ := c.findFactory(symbol, name)
 	return bining.factory()
+}
+
+func (c *containerDefault) MustGet(symbol Any, names ...string) Any {
+	resolved, err := c.Get(symbol, names...)
+	if err != nil {
+		panic(fmt.Sprintf("error was occurred when getting %#v[%#v]: %v", symbol, names, err))
+	}
+	return resolved
 }
 
 func (c *containerDefault) IsBound(symbol Any, names ...string) bool {

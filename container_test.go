@@ -57,6 +57,25 @@ func (t *ContainerTestSuite) TestBasic() {
 	t.False(c1.IsBound(testDep1))
 }
 
+type depType1 int
+type depType2 int
+
+func (t *ContainerTestSuite) TestBasicTypes() {
+	var dep1 depType1 = 1
+	var dep2 depType2 = 1
+
+	c1 := NewContainer("")
+	c1.Bind(dep1).To("val1")
+	c1.Bind(dep2).To("val2")
+	c1.Build()
+
+	val1, _ := c1.Get(dep1)
+	val2 := c1.MustGet(dep2)
+
+	t.Equal("val1", val1)
+	t.Equal("val2", val2)
+}
+
 func (t *ContainerTestSuite) TestNamedBasic() {
 	c1 := NewContainer("withNames")
 	c1.Bind(testDep1).To(resolvedValue)
