@@ -2,13 +2,13 @@ package inversify
 
 // ContainerBinder holds interface to encapsulate bindings
 type ContainerBinder interface {
-	// Bind .
+	// Bind declares dependency (make a panic if already binded)
 	Bind(symbol Any) *Binding
 
-	// Unbind .
+	// Unbind removes dependency
 	Unbind(symbol Any)
 
-	// IsBound .
+	// IsBound check existences of dependency
 	IsBound(symbol Any) bool
 }
 

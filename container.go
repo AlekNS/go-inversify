@@ -5,37 +5,37 @@ import (
 	"reflect"
 )
 
-// Container .
+// Container holds dependencies graph
 type Container interface {
-	// Bind .
+	// Bind declares dependency (make a panic if already binded)
 	Bind(Any, ...string) *Binding
-	// Rebind .
+	// Rebind re-declares dependency (make a panic if not exists)
 	Rebind(Any, ...string) *Binding
-	// Unbind .
+	// Unbind removes dependency
 	Unbind(Any, ...string) Container
 
-	// Get .
+	// Get resolves dependency
 	Get(Any, ...string) (Any, error)
-	// Get .
+	// Get resolves dependency and make a panic if error was produced
 	MustGet(Any, ...string) Any
-	// IsBound .
+	// IsBound check existences of dependency
 	IsBound(Any, ...string) bool
 
-	// Build .
+	// Build and resolves dependencies
 	Build()
 
-	// Merge with another container
+	// Merge with another container and returns new container
 	Merge(container Container, name string) Container
 	// SetParent supports for hierarchical DI systems
 	SetParent(Container)
 
-	// GetParent .
+	// GetParent gets parent of container
 	GetParent() Container
 
-	// Load .
+	// Load binds module
 	Load(*Module) error
 
-	// UnLoad .
+	// UnLoad unbinds module
 	UnLoad(*Module) error
 
 	// Snapshot @TODO
@@ -46,7 +46,7 @@ type optionalBind struct {
 	dependency Any
 }
 
-// Optional .
+// Optional declares dependency as optional (no errors occurred when dependency not resolved)
 func Optional(dep Any) Any {
 	return optionalBind{dep}
 }
@@ -56,7 +56,7 @@ type namedBind struct {
 	name       string
 }
 
-// Named .
+// Named declares dependency that could have multiply resolves with distinct names
 func Named(dep Any, name string) Any {
 	if _, isOptional := dep.(optionalBind); isOptional {
 		panic(fmt.Sprintf("Optional binding couldn't be embedded into named"))
@@ -93,9 +93,9 @@ func (c *containerDefault) bindInternal(isRebinding bool, symbol Any, names ...s
 	isBindingExists := c.IsBound(symbol, name)
 
 	if isRebinding && !isBindingExists {
-		panic(fmt.Sprintf(`binding "%+v[%s]" is not exists for re-declaration`, symbol, name))
+		panic(fmt.Sprintf(`binding "%+v[%v][%s]" is not exists for re-declaration`, symbol, reflect.TypeOf(symbol), name))
 	} else if !isRebinding && isBindingExists {
-		panic(fmt.Sprintf(`binding "%+v[%s]" is already registered, use Rebind to replace binding`, symbol, name))
+		panic(fmt.Sprintf(`binding "%+v[%v][%s]" is already registered, use Rebind to replace binding`, symbol, reflect.TypeOf(symbol), name))
 	}
 
 	symbol = reflectInterfacePointers(symbol)
@@ -168,7 +168,7 @@ func (c *containerDefault) Get(symbol Any, names ...string) (Any, error) {
 func (c *containerDefault) MustGet(symbol Any, names ...string) Any {
 	resolved, err := c.Get(symbol, names...)
 	if err != nil {
-		panic(fmt.Sprintf("error was occurred when getting %#v[%#v]: %v", symbol, names, err))
+		panic(fmt.Sprintf("error was occurred when getting %#v[%v][%#v]: %v", symbol, reflect.TypeOf(symbol), names, err))
 	}
 	return resolved
 }

@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// PairDependencyName .
+// PairDependencyName holds dependency and name
 type PairDependencyName struct {
 	Symbol Any
 	Name   string

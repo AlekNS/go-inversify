@@ -2,6 +2,7 @@ package inversify
 
 import (
 	"fmt"
+	"reflect"
 )
 
 func unwrapDependency(dependency Any) (Any, string, bool) {
@@ -24,7 +25,7 @@ func resolveContainerDependencies(container *containerDefault) error {
 	scd := getStronglyConnectedDependencyList(container.factories)
 	for _, items := range scd {
 		if len(items) > 1 {
-			return fmt.Errorf("the container has cycle dependencies: %+v", items)
+			return fmt.Errorf("the container has cycle dependencies: %#v", items)
 		}
 	}
 
@@ -43,7 +44,7 @@ func resolveContainerDependencies(container *containerDefault) error {
 							return Any(nil), nil
 						})
 					} else {
-						return fmt.Errorf("dependency %+v is not found", dependency)
+						return fmt.Errorf("dependency %#v[%v] is not found", dependency, reflect.TypeOf(dependency))
 					}
 				}
 			}

@@ -76,6 +76,26 @@ func (t *ContainerTestSuite) TestBasicTypes() {
 	t.Equal("val2", val2)
 }
 
+func (t *ContainerTestSuite) TestNoDepsForBasicTypes() {
+	var dep1 depType1 = 1
+	var dep2 depType2 = 1
+
+	c1 := NewContainer("")
+	c1.Bind(dep1).ToFactory(func (dep2 Any) (Any, error) { return nil, nil }, dep2)
+
+	t.PanicsWithValue("dependency 1[inversify.depType2] is not found", func() {
+		c1.Build()
+	})
+
+	c1 = NewContainer("")
+	c1.Bind(dep1).ToFactory(func (dep2 Any) (Any, error) { return nil, nil }, (*depType2)(nil))
+
+	t.PanicsWithValue("dependency (*inversify.depType2)(nil)[*inversify.depType2] is not found", func() {
+		c1.Build()
+	})
+
+}
+
 func (t *ContainerTestSuite) TestNamedBasic() {
 	c1 := NewContainer("withNames")
 	c1.Bind(testDep1).To(resolvedValue)
